@@ -7,6 +7,8 @@ export interface MediaItem {
   type: 'movie' | 'tv' | 'anime';
   image?: string;
   thumbnail_url?: string;
+  rating?: string;
+  description?: string;
   year?: number;
   actors?: string;
   cast?: string;
@@ -38,6 +40,8 @@ export interface ImdbSearchResponse {
 const EMBED_BASE_1 = 'https://vidsrc.cc/v2/embed';
 const EMBED_BASE_2 = 'https://vidsrc-embed.ru/embed';
 const IMDB_SEARCH_API = 'https://imdb.iamidiotareyoutoo.com/search';
+const OMDB_API_KEY = import.meta.env.VITE_OMDB_API_KEY;
+const OMDB_BASE_URL = 'https://www.omdbapi.com';
 
 export type ServerId = '1' | '2';
 
@@ -72,8 +76,19 @@ const MOCK_ANIME: MediaItem[] = [
 ];
 
 // Fetch movies list
+// Fetch movies list (dynamic)
 export async function fetchMovies(_page: number = 1): Promise<ApiResponse> {
-  return { result: MOCK_MOVIES, pages: 1 };
+  try {
+    const results = await searchMediaRemote('movie 2025');
+    if (results.length > 0) {
+      return { result: results, pages: 1 };
+    }
+    // Fallback if no results
+    return { result: MOCK_MOVIES, pages: 1 };
+  } catch (error) {
+    console.error('Failed to fetch movies:', error);
+    return { result: MOCK_MOVIES, pages: 1 };
+  }
 }
 
 // Fetch TV series list
@@ -112,11 +127,11 @@ export function getAnimeEmbedUrl(id: string, episode: number, type: string = 'su
 }
 
 // Search media by title using the new IMDb API
-export async function searchMediaRemote(query: string): Promise<MediaItem[]> {
+export async function searchMediaRemote(query: string, page: number = 1): Promise<MediaItem[]> {
   try {
-    const response = await fetch(`${IMDB_SEARCH_API}?q=${encodeURIComponent(query)}&tt=&lsn=1&v=1`);
+    const response = await fetch(`${IMDB_SEARCH_API}?q=${encodeURIComponent(query)}&tt=&lsn=${page}&v=1`);
     if (!response.ok) throw new Error('Search failed');
-    
+
     const data: ImdbSearchResponse = await response.json();
     if (!data.ok || !data.description) return [];
 
@@ -135,10 +150,88 @@ export async function searchMediaRemote(query: string): Promise<MediaItem[]> {
   }
 }
 
+export interface OmdbSeasonDetails {
+  Title: string;
+  Season: string;
+  totalSeasons: string;
+  Episodes: Array<{
+    Title: string;
+    Released: string;
+    Episode: string;
+    imdbRating: string;
+    imdbID: string;
+  }>;
+  Response: string;
+}
+
+export async function fetchTVShowDetails(imdbId: string): Promise<{ totalSeasons: number }> {
+  try {
+    console.log('[OMDB] Fetching TV details for:', imdbId, 'Key available:', !!OMDB_API_KEY);
+    if (!OMDB_API_KEY) {
+      console.warn('[OMDB] API key is missing');
+      return { totalSeasons: 1 };
+    }
+
+    const url = `${OMDB_BASE_URL}/?i=${imdbId}&apikey=${OMDB_API_KEY}&type=series`;
+    console.log('[OMDB] URL:', url);
+
+    const response = await fetch(url);
+    const data = await response.json();
+    console.log('[OMDB] Response:', data);
+
+    if (data.Response === 'True' && data.totalSeasons) {
+      return { totalSeasons: parseInt(data.totalSeasons, 10) };
+    }
+    return { totalSeasons: 1 };
+  } catch (error) {
+    console.error('[OMDB] Error fetching TV show details:', error);
+    return { totalSeasons: 1 };
+  }
+}
+
+export async function fetchSeasonDetails(imdbId: string, season: number): Promise<{ episodes: number }> {
+  try {
+    if (!OMDB_API_KEY) return { episodes: 1 };
+
+    const url = `${OMDB_BASE_URL}/?i=${imdbId}&apikey=${OMDB_API_KEY}&Season=${season}`;
+    const response = await fetch(url);
+    const data: OmdbSeasonDetails = await response.json();
+    console.log('[OMDB] Season Response:', data);
+
+    if (data.Response === 'True' && data.Episodes) {
+      return { episodes: data.Episodes.length };
+    }
+    return { episodes: 1 };
+  } catch (error) {
+    console.error('[OMDB] Error fetching season details:', error);
+    // Fallback to a reasonable default if offline or error
+    return { episodes: 1 };
+  }
+}
+
+export async function fetchMediaDetails(imdbId: string): Promise<{ type: 'movie' | 'series' | 'unknown' }> {
+  try {
+    if (!OMDB_API_KEY) return { type: 'unknown' };
+
+    const url = `${OMDB_BASE_URL}/?i=${imdbId}&apikey=${OMDB_API_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.Response === 'True') {
+      if (data.Type === 'movie') return { type: 'movie' };
+      if (data.Type === 'series') return { type: 'series' };
+    }
+    return { type: 'unknown' };
+  } catch (error) {
+    console.error('[OMDB] Error fetching media details:', error);
+    return { type: 'unknown' };
+  }
+}
+
 // Client-side filter (fallback)
 export function searchMedia(items: MediaItem[], searchTerm: string): MediaItem[] {
   const term = searchTerm.toLowerCase().trim();
-  return items.filter(item => 
+  return items.filter(item =>
     item.title.toLowerCase().includes(term)
   );
 }
@@ -162,12 +255,12 @@ export function setupPlayerEventListener(callback: (data: PlayerEventData['data'
   const handler = (event: MessageEvent) => {
     // Listen to both origins
     if (event.origin !== 'https://vidsrc.cc' && event.origin !== 'https://vidsrc-embed.ru') return;
-    
+
     if (event.data && event.data.type === 'PLAYER_EVENT') {
       callback(event.data.data);
     }
   };
-  
+
   window.addEventListener('message', handler);
   return () => window.removeEventListener('message', handler);
 }

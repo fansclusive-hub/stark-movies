@@ -1,70 +1,52 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Play, TrendingUp } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
-import MediaGrid from '@/components/MediaGrid';
+import HeroSection from '@/components/HeroSection';
+import ContentRow from '@/components/ContentRow';
+import Top10Row from '@/components/Top10Row';
 import { type MediaItem } from '@/lib/api';
 import { HOME_PAGE_DATA } from '@/lib/home-data';
 
 export default function HomePage() {
-  const [movies, setMovies] = useState<MediaItem[]>(HOME_PAGE_DATA);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    // We already have the hardcoded data
-    setLoading(false);
+  // Categorize content
+  const featuredMovie = useMemo(() => {
+    // Pick a random movie to feature, or fix it to a specific one like 'Dune' or 'Avengers'
+    // Let's pick 'Dune: Part Two' if available, otherwise random
+    const specificFeature = HOME_PAGE_DATA.find(m => m.title.includes('Dune'));
+    if (specificFeature) return specificFeature;
+    return HOME_PAGE_DATA[Math.floor(Math.random() * HOME_PAGE_DATA.length)];
   }, []);
 
+  const trendingContent = HOME_PAGE_DATA;
+  const movies = HOME_PAGE_DATA.filter(item => item.type === 'movie');
+  const tvSeries = HOME_PAGE_DATA.filter(item => item.type === 'tv');
+  const anime = HOME_PAGE_DATA.filter(item => item.type === 'anime');
+
   return (
-    <main className="min-h-screen pt-16">
+    <main className="min-h-screen bg-background pb-20">
       {/* Hero Section */}
-      <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background/95" />
-        
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-primary/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      <HeroSection item={featuredMovie} />
+
+      {/* Main Content Area - Shifted up to overlap slightly with Hero */}
+      <div className="relative z-20 space-y-12 pb-12">
+
+        {/* Top 10 Row - Overlapping Hero */}
+        <div className="-mt-32">
+          <Top10Row title="Top 10" items={trendingContent} />
         </div>
 
-        {/* Hero content */}
-        <div className="relative z-10 container mx-auto px-4 text-center">
-          <div className="animate-slide-up">
-            <div className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full mb-8">
-              <Play className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium text-foreground">Stream unlimited content</span>
-            </div>
+        {/* Trending Row */}
+        <ContentRow title="Trending Today" items={trendingContent} />
 
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6">
-              Discover & Watch
-              <br />
-              <span className="text-gradient">Unlimited</span> Content
-            </h1>
+        {/* TV Series Row */}
+        <ContentRow title="Series on Netflix" items={tvSeries} />
 
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-              Stream thousands of movies, TV shows, and anime. No subscriptions, no limits.
-            </p>
+        {/* Top Rated Row */}
+        <ContentRow title="Top Rated" items={movies} />
 
-            {/* Search Bar */}
-            <SearchBar large />
-          </div>
-        </div>
-
-        {/* Bottom fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
-      </section>
-
-      {/* Featured Content */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center gap-3 mb-8">
-            <TrendingUp className="w-6 h-6 text-primary" />
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground">Trending Now</h2>
-          </div>
-
-          <MediaGrid items={movies} loading={loading} />
-        </div>
-      </section>
+        {/* Anime Row */}
+        <ContentRow title="Genres" items={anime} />
+      </div>
     </main>
   );
 }

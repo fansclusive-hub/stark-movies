@@ -6,14 +6,18 @@ export const HOME_PAGE_DATA: MediaItem[] = [
     title: "Avengers: Endgame",
     cast: "Robert Downey Jr., Chris Evans",
     thumbnail_url: "https://m.media-amazon.com/images/M/MV5BMTc5MDE2ODcwNV5BMl5BanBnXkFtZTgwMzI2NzQ2NzM@._V1_.jpg",
-    type: "movie"
+    type: "movie",
+    rating: "98%",
+    description: "After the devastating events of Avengers: Infinity War, the universe is in ruins. With the help of remaining allies, the Avengers assemble once more in order to reverse Thanos' actions and restore balance to the universe."
   },
   {
     imdb_id: "tt0903747",
     title: "Breaking Bad",
     cast: "Bryan Cranston, Aaron Paul",
     thumbnail_url: "https://m.media-amazon.com/images/M/MV5BMzU5ZGYzNmQtMTdhYy00OGRiLTg0NmQtYjVjNzliZTg1ZGE4XkEyXkFqcGc@._V1_.jpg",
-    type: "tv"
+    type: "tv",
+    rating: "99%",
+    description: "A high school chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine in order to secure his family's future."
   },
   {
     imdb_id: "tt4574334",
@@ -41,7 +45,9 @@ export const HOME_PAGE_DATA: MediaItem[] = [
     title: "Dune: Part Two",
     cast: "Timothée Chalamet, Zendaya",
     thumbnail_url: "https://m.media-amazon.com/images/M/MV5BNTc0YmQxMjEtODI5MC00NjFiLTlkMWUtOGQ5NjFmYWUyZGJhXkEyXkFqcGc@._V1_.jpg",
-    type: "movie"
+    type: "movie",
+    rating: "97%",
+    description: "Paul Atreides unites with Chani and the Fremen while on a warpath of revenge against the conspirators who destroyed his family."
   },
   {
     imdb_id: "tt0944947",
@@ -63,5 +69,14 @@ export const HOME_PAGE_DATA: MediaItem[] = [
     cast: "Jessie James Grelle, Bryce Papenbrook",
     thumbnail_url: "https://m.media-amazon.com/images/M/MV5BZjliODY5MzQtMmViZC00MTZmLWFhMWMtMjMwM2I3OGY1MTRiXkEyXkFqcGc@._V1_.jpg",
     type: "anime"
+  },
+  {
+    imdb_id: "tt0133093",
+    title: "The Matrix",
+    cast: "Keanu Reeves, Laurence Fishburne",
+    thumbnail_url: "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4XkEyXkFqcGc@._V1_.jpg",
+    type: "movie",
+    rating: "87%",
+    description: "When a beautiful stranger leads computer hacker Neo to a forbidding underworld, he discovers the shocking truth--the life he knows is the elaborate deception of an evil cyber-intelligence."
   }
 ];

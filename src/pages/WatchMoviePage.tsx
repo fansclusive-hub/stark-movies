@@ -1,8 +1,8 @@
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Film, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Film, AlertCircle, Share2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import VideoPlayer from '@/components/VideoPlayer';
-import { getMovieEmbedUrl, ServerId } from '@/lib/api';
+import { getMovieEmbedUrl, ServerId, fetchMediaDetails } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -15,13 +15,25 @@ export default function WatchMoviePage() {
   const [server, setServer] = useState<ServerId>('1');
 
   useEffect(() => {
+    async function checkMediaType() {
+      if (!id) return;
+      const { type } = await fetchMediaDetails(id);
+      if (type === 'series') {
+        const titleParam = title ? `?title=${encodeURIComponent(title)}` : '';
+        navigate(`/tv/${id}/1/1${titleParam}`, { replace: true });
+      }
+    }
+    checkMediaType();
+  }, [id, title, navigate]);
+
+  useEffect(() => {
     setShowFallback(false);
-    
+
     // Show fallback options after 5 seconds if user might be seeing a 404
     const timer = setTimeout(() => {
       setShowFallback(true);
     }, 5000);
-    
+
     return () => clearTimeout(timer);
   }, [id]);
 
@@ -44,12 +56,22 @@ export default function WatchMoviePage() {
     else if (newMode === 'anime') navigate(`/anime/${id}/1/sub${titleParam}`);
   };
 
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      // You could add a toast here, for now a simple alert or just silent copy
+      alert('Link copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+    }
+  };
+
   return (
     <main className="min-h-screen pt-20 pb-16">
       <div className="container mx-auto px-4">
         {/* Back link */}
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -69,30 +91,32 @@ export default function WatchMoviePage() {
           </div>
 
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => handleModeSwitch('movie')}
               className="h-8 px-3 bg-primary/20 border-primary/50"
             >
               Movie
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => handleModeSwitch('tv')}
               className="h-8 px-3 glass"
             >
               TV Series
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => handleModeSwitch('anime')}
               className="h-8 px-3 glass"
             >
               Anime
             </Button>
+
+
           </div>
         </div>
 
@@ -117,7 +141,7 @@ export default function WatchMoviePage() {
                 </p>
               </div>
               <div className="flex flex-wrap justify-center gap-3">
-                <Button 
+                <Button
                   onClick={handleAutoFallback}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
                 >
@@ -129,14 +153,14 @@ export default function WatchMoviePage() {
         )}
 
         {/* Video Player */}
-        <VideoPlayer 
+        <VideoPlayer
           key={`${id}-${server}`}
-          embedUrl={getMovieEmbedUrl(id, server)} 
+          embedUrl={getMovieEmbedUrl(id, server)}
           title={`Movie ${title}`}
           mediaId={id}
           mediaType="movie"
         />
-        
+
         <div className="mt-6 flex flex-col items-center gap-4">
           <div className="flex items-center gap-3">
             <Button
@@ -145,8 +169,8 @@ export default function WatchMoviePage() {
               onClick={() => setServer('1')}
               className={cn(
                 "h-9 px-6 transition-all duration-300",
-                server === '1' 
-                  ? "bg-primary text-primary-foreground border-primary shadow-[0_0_15px_rgba(var(--primary),0.3)]" 
+                server === '1'
+                  ? "bg-primary text-primary-foreground border-primary shadow-[0_0_15px_rgba(var(--primary),0.3)]"
                   : "glass hover:bg-white/10"
               )}
             >
@@ -158,14 +182,25 @@ export default function WatchMoviePage() {
               onClick={() => setServer('2')}
               className={cn(
                 "h-9 px-6 transition-all duration-300",
-                server === '2' 
-                  ? "bg-primary text-primary-foreground border-primary shadow-[0_0_15px_rgba(var(--primary),0.3)]" 
+                server === '2'
+                  ? "bg-primary text-primary-foreground border-primary shadow-[0_0_15px_rgba(var(--primary),0.3)]"
                   : "glass hover:bg-white/10"
               )}
             >
               Server 2
             </Button>
           </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleShare}
+            className="h-9 px-6 glass gap-2"
+          >
+            <Share2 className="w-4 h-4" />
+            Share
+          </Button>
+
           <p className="text-muted-foreground text-xs text-center max-w-md">
             Switch to VidPlay or any other cloud if UpCloud doesn't load.
             If one server fails, try the other.

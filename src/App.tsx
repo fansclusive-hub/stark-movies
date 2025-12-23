@@ -14,12 +14,14 @@ import WatchTVPage from "./pages/WatchTVPage";
 import WatchAnimePage from "./pages/WatchAnimePage";
 import NotFound from "./pages/NotFound";
 import HoverReceiver from "@/visual-edits/VisualEditsMessenger";
+import DevToolsBlocker from "./components/DevToolsBlocker";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <DevToolsBlocker />
       <Toaster />
       <Sonner />
       <HoverReceiver />
